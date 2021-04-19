@@ -64,7 +64,6 @@ def prep_for_train(sample_df):
 
     # Path to the data
     DATADIR = Path('data/') / 'real_vs_fake' / 'real-vs-fake'
-    print(DATADIR)
 
     # Load the sample images
     n = sample_df.shape[0]
