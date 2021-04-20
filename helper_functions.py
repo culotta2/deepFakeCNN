@@ -91,7 +91,7 @@ def imgs_to_numpy(dsplit):
     SAVEPATH = PATHDIR / 'data_array'
 
     df = pd.read_csv(PATHDIR / f'{dsplit}.csv', header=0).drop(
-        ['original_path', 'Unnamed: 0', 'label_str'], axis=1).head()
+        ['original_path', 'Unnamed: 0', 'label_str'], axis=1)
 
     # Create containers for the image data
     n = df.shape[0]
