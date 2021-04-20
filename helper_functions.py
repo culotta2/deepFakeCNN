@@ -42,8 +42,7 @@ def get_images(n: int, dtype: str = 'train', seed: int = None):
     sample_ids_fake = pd.DataFrame(
         {'id': rn.choice(df_fake['id'].to_numpy(), size=int(n / 2))})
 
-    sample_ids = pd.concat(
-        [sample_ids_real, sample_ids_fake], ignore_index=True)
+    sample_ids = sample_ids_real.append(sample_ids_fake)
 
     # Get the labels and image paths from the ids
     sample_df = df.copy()
