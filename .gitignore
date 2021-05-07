@@ -1,6 +1,5 @@
 # Add images
 *.jpg
-*.png
 data/
 
 # For vscode
