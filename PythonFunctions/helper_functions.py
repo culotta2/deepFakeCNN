@@ -1,3 +1,4 @@
+from shutil import copyfile
 import numpy as np
 import numpy.random as rn
 import pandas as pd
@@ -52,6 +53,60 @@ def get_images(n: int, dsplit: str = 'train', seed: int = None):
 
     return shuffled_sample
 
+def create_quiz(n: int, dsplit: str = 'train', seed: int = None, name: str = None):
+    # Check dsplit variable
+    if dsplit not in {'train', 'valid', 'test'}:
+        raise Exception('dsplit must be "train", "valid", or "test"')
+    
+    # Create directories
+    QUIZDIR = Path('.') / 'Quizzes' 
+    DATADIR = Path('data') / 'real_vs_fake' / 'real-vs-fake' 
+
+    # Check name variable
+    upper_bound = 9999999
+    bound_padding = int(np.log10(upper_bound)) + 1
+    if name is None:
+        name = str(rn.randint(0, upper_bound)).zfill(bound_padding)
+
+    # Create save directory
+    SAVEDIR = QUIZDIR / name / name / 'images'
+
+    # Make sure save directory is unique
+    while SAVEDIR.is_dir():
+        name = str(rn.randint(0, upper_bound)).zfill(bound_padding)
+        SAVEDIR = QUIZDIR / name / 'images' 
+    SAVEDIR.mkdir(parents=True, exist_ok=False)
+
+    # Copy the README.txt file
+    copyfile(QUIZDIR / 'README.txt', QUIZDIR / name / name / 'README.txt')
+
+    # Randomly select n images
+    shuffled_sample = get_images(n, dsplit, seed).reset_index()
+
+    # Save the answer key
+    y = shuffled_sample['label'].to_numpy()
+    
+    # Copy the images to a new location
+    padding = int(np.log10(n)) + 1
+    paths = shuffled_sample['path'].to_numpy()
+
+    for img_idx, img_path in enumerate(paths):
+        idx_str = str(img_idx + 1).zfill(padding)
+        img_src = DATADIR / img_path
+        img_dest = SAVEDIR / f'img{idx_str}.jpg'
+        
+        copyfile(img_src, img_dest)
+
+    # csv to fill in
+    fill = pd.DataFrame({'image': shuffled_sample.index.to_numpy() + 1, 'type': [''] * n})
+    fill.to_csv(SAVEDIR / 'quiz.csv', index=False)
+
+    # Answers
+    answers = pd.DataFrame({'image': shuffled_sample.index.to_numpy() + 1, 'type': shuffled_sample['label'].to_numpy()})
+    answers.to_csv(QUIZDIR / name / 'answers.csv', index=False)
+
+    # Alert
+    print(f'Created quiz for {name}')
 
 def prep_for_train(sample_df):
     """
@@ -115,18 +170,7 @@ def main():
     """
     Function for testing
     """
-    # imgs_to_numpy('train')
-
-    # with open('data/data_array/X_train.npy', 'rb') as f:
-    #     X = np.load(f)
-
-    # with open('data/data_array/y_train.npy', 'rb') as f:
-    #     y = np.load(f)
-
-    # plt.imshow(X[1, :, :, :])
-    # print(X[1, :, :, :].shape)
-    # plt.show()
-
+    create_quiz(10)
 
 if __name__ == '__main__':
     main()
