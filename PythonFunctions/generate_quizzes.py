@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!venv/bin/python3
 
 import sys
 from helper_functions import create_quiz
