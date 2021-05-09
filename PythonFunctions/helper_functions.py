@@ -108,6 +108,67 @@ def create_quiz(n: int, dsplit: str = 'train', seed: int = None, name: str = Non
     # Alert
     print(f'Created quiz for {name}')
 
+def load_quizzes():
+    '''
+    Function to load in all of the paths with quiz answers
+    '''
+    # Location of the guesses
+
+    # Location of the answers
+    RESULTSDIR = Path('.') / 'QuizzesResults' / 'answers'
+    QUIZDIR = Path('.') / 'Quizzes'
+
+    # Get all the csv files
+    quiz_files = RESULTSDIR.glob('*.csv')
+    
+    # Load in the master file
+    master_quiz = pd.read_csv(Path('.') / 'QuizzesResults' / 'master_quiz.csv' )
+    names = set(master_quiz['name'])
+
+    for quiz_file in quiz_files:
+        # Extract the id
+        name = str(quiz_file).split('/')[2].split('_')[0]
+
+        # Check if the name is already accounted for
+        if name in names:
+            continue
+
+        # Create the dataframe for the new answers
+        new_df = pd.read_csv(quiz_file)
+        
+        guesses = new_df['type']
+        img_id = new_df['image']
+        name_col = [name] * len(guesses)
+        ans = pd.read_csv(QUIZDIR / name / 'answers.csv')['type']
+        
+        df = pd.DataFrame({
+            'name'  : name_col,
+            'img_id': img_id,
+            'guess' : guesses,
+            'true'  : ans
+        })
+
+        # Append the master df
+        master_quiz = master_quiz.append(df)
+
+    # Write the quizzes to the file
+    master_quiz.to_csv(Path('.') / 'QuizzesResults' / 'master_quiz.csv', index = False)
+
+def get_quiz_stats():
+    '''
+    Returns the quiz average. Will return more stats
+    '''
+    # Make sure the master is updated
+    load_quizzes()
+
+    master_df = pd.read_csv(Path('.') / 'QuizzesResults' / 'master_quiz.csv' )
+    
+    diff = np.abs(master_df['guess'].to_numpy() - master_df['true'].to_numpy())
+
+    avg = 1 - np.sum(diff) / len(diff)
+    
+    return diff
+
 def prep_for_train(sample_df):
     """
     Gets the images from the get_image family of functions into a format
@@ -170,7 +231,7 @@ def main():
     """
     Function for testing
     """
-    create_quiz(10)
+    get_quiz_stats()
 
 if __name__ == '__main__':
     main()
