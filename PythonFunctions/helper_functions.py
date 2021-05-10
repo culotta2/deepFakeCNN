@@ -99,7 +99,7 @@ def create_quiz(n: int, dsplit: str = 'train', seed: int = None, name: str = Non
 
     # csv to fill in
     fill = pd.DataFrame({'image': shuffled_sample.index.to_numpy() + 1, 'type': [''] * n})
-    fill.to_csv(SAVEDIR / 'quiz.csv', index=False)
+    fill.to_csv(SAVEDIR / f'{name}_quiz.csv', index=False)
 
     # Answers
     answers = pd.DataFrame({'image': shuffled_sample.index.to_numpy() + 1, 'type': shuffled_sample['label'].to_numpy()})
@@ -154,12 +154,13 @@ def load_quizzes():
     # Write the quizzes to the file
     master_quiz.to_csv(Path('.') / 'QuizzesResults' / 'master_quiz.csv', index = False)
 
-def get_quiz_stats():
+def get_quiz_stats(load=True):
     '''
     Returns the quiz average. Will return more stats
     '''
     # Make sure the master is updated
-    load_quizzes()
+    if load:
+        load_quizzes()
 
     master_df = pd.read_csv(Path('.') / 'QuizzesResults' / 'master_quiz.csv' )
     
@@ -167,7 +168,27 @@ def get_quiz_stats():
 
     avg = 1 - np.sum(diff) / len(diff)
     
-    return diff
+    return {'avg': avg}
+
+def quiz_breakdown():
+    # Make sure the master is updated
+    load_quizzes()
+
+    master_df = pd.read_csv(Path('.') / 'QuizzesResults' / 'master_quiz.csv' )
+
+    master_df['diff'] = np.abs(master_df['guess'] - master_df['true'])
+    
+    summary_df = master_df.groupby(['name']).sum().drop(['guess', 'true', 'img_id'], axis=1)
+
+    summary_df['score'] = 1 - summary_df['diff'].to_numpy() / 30
+    summary_df.drop(['diff'], axis=1, inplace=True)
+    
+    # Add the overall average
+    avg = get_quiz_stats(load=False)['avg']
+    avg_series = pd.Series(data = {'score': avg}, name='overall')
+    summary_df = summary_df.append(avg_series, ignore_index=False)
+    
+    return summary_df
 
 def prep_for_train(sample_df):
     """
@@ -231,7 +252,6 @@ def main():
     """
     Function for testing
     """
-    get_quiz_stats()
-
+    quiz_breakdown()
 if __name__ == '__main__':
     main()
