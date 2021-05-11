@@ -2,9 +2,6 @@
 *.jpg
 data/
 
-# For quizzes
-Quizzes/*
-
 # For vscode
 .vscode/
 
